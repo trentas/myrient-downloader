@@ -7,8 +7,13 @@
 BASE_URL="https://myrient.erista.me/files/No-Intro"
 MAX_PARALLEL=5
 VERBOSE=0
+
 PLATFORMS_FILE=""
 EXCLUDES_FILE=""
+TOTAL_FILES=0
+SUCCESS_COUNT=0
+FAIL_COUNT=0
+
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -61,6 +66,7 @@ download_file() {
   PLATFORM_DIR="$1"
   FILE="$2"
   FILE_URL="$3"
+  RESULT_FILE="${PLATFORM_DIR}/.result.$(date +%s%N)"
 
   DECODED_FILE=$(python3 -c "import urllib.parse; print(urllib.parse.unquote('''$FILE'''))")
   LOCAL_PATH="${PLATFORM_DIR}/${DECODED_FILE}"
@@ -116,12 +122,14 @@ download_file() {
     if [[ -n "$REMOTE_SIZE" && "$REMOTE_SIZE" == "$LOCAL_SIZE" && "$LOCAL_SIZE" -gt 0 ]]; then
       echo "✅ Download verified by size: $FILE"
       echo "$FILE" >> "$COMPLETED_FILE"
-      sort -u "$COMPLETED_FILE" -o "$COMPLETED_FILE"
+      echo "success" >> "$RESULT_FILE"
     else
       echo "⚠️  Download may have failed or file is incomplete: $FILE"
+      echo "fail" >> "$RESULT_FILE"
     fi
   else
     echo "⚠️  File missing after attempted download: $FILE"
+    echo "fail" >> "$RESULT_FILE"
   fi
 }
 
@@ -174,6 +182,20 @@ while IFS= read -r DIR_NAME || [[ -n "$DIR_NAME" ]]; do
     url="${rest#*|||}"
     download_file "$dir" "$file" "$url"
   '
+
+  echo "📊 Download Summary"
+  echo "----------------------"
+
+  SUCCESS_COUNT=$(find "$LOCAL_DIR" -name ".result.*" -exec cat {} + | grep -c "success")
+  FAIL_COUNT=$(find "$LOCAL_DIR" -name ".result.*" -exec cat {} + | grep -c "fail")
+  TOTAL_FILES=$((SUCCESS_COUNT + FAIL_COUNT))
+
+  echo "🧾 Total attempted: $TOTAL_FILES"
+  echo "✅ Completed:       $SUCCESS_COUNT"
+  echo "❌ Errors:          $FAIL_COUNT"
+
+  # Clean up result files
+  find "$LOCAL_DIR" -name ".result.*" -delete
 
   sort -u "${LOCAL_DIR}/.completed" -o "${LOCAL_DIR}/.completed"
   rm -f "$TMP_QUEUE"
