@@ -1,6 +1,6 @@
 # 🎮 Myrient Downloader
 
-A parallel, resumable downloader for [myrient.erista.me](https://myrient.erista.me/files/No-Intro/) No-Intro ROM sets.  
+A parallel, resumable downloader for [myrient.erista.me](https://myrient.erista.me/files/) ROM sets.  
 Works on **macOS** and **Linux**, supports exclusions, parallelism, retries, and file verification by size.
 
 ---
@@ -94,5 +94,5 @@ MIT License
 ## ❤️ Inspired By
 
 - No-Intro Project
-- TOSEC / Redump
+- TOSEC / Redump / No-Intro
 - ROM preservation efforts everywhere 🌍
