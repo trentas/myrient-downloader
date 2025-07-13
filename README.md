@@ -91,8 +91,13 @@ MIT License
 
 ---
 
+## 🙏 Thanks
+
+Special thanks to [myrient.erista.me](https://myrient.erista.me) for hosting and preserving retrogaming collections.
+
+---
+
 ## ❤️ Inspired By
 
-- No-Intro Project
-- TOSEC / Redump / No-Intro
+- TOSEC / Redump / No-Intro Projects
 - ROM preservation efforts everywhere 🌍
