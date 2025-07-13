@@ -14,6 +14,12 @@ TOTAL_FILES=0
 SUCCESS_COUNT=0
 FAIL_COUNT=0
 
+TMP_QUEUE=""
+cleanup() {
+  [[ -n "$TMP_QUEUE" && -f "$TMP_QUEUE" ]] && rm -f "$TMP_QUEUE"
+  find . -name ".result.*" -delete
+}
+trap cleanup EXIT SIGINT SIGTERM
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -80,6 +86,8 @@ download_file() {
   if [[ -f "$COMPLETED_FILE" ]] && grep -Fxq "$FILE" "$COMPLETED_FILE" && [[ -s "$LOCAL_PATH" ]]; then
     echo "✅ Already complete: $FILE"
     return 0
+  else
+    touch "$COMPLETED_FILE"
   fi
 
   if [[ -s "$LOCAL_PATH" ]]; then
