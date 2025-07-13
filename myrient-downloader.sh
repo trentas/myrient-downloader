@@ -2,7 +2,7 @@
 
 # Usage:
 #   ./myrient-downloader.sh platforms.txt exclude_patterns.txt
-#   ./myrient-downloader.sh --verbose platforms.txt exclude_patterns.txt
+#   ./myrient-downloader.sh --verbose --base-url https://myrient.erista.me/files/Redump platforms.txt exclude_patterns.txt
 
 BASE_URL="https://myrient.erista.me/files/No-Intro"
 MAX_PARALLEL=5
@@ -16,6 +16,10 @@ while [[ $# -gt 0 ]]; do
     --verbose)
       VERBOSE=1
       shift
+      ;;
+    --base-url)
+      BASE_URL="$2"
+      shift 2
       ;;
     *)
       if [[ -z "$PLATFORMS_FILE" ]]; then
@@ -31,13 +35,8 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [ ! -f "$PLATFORMS_FILE" ]; then
-  echo "❌ Platforms file not found: $PLATFORMS_FILE"
-  exit 1
-fi
-
-if [ ! -f "$EXCLUDES_FILE" ]; then
-  echo "❌ Exclusion patterns file not found: $EXCLUDES_FILE"
+if [[ -z "${PLATFORMS_FILE:-}" || -z "${EXCLUDES_FILE:-}" ]]; then
+  echo "Usage: $0 [--verbose] [--base-url URL] platforms.txt exclude_patterns.txt"
   exit 1
 fi
 
