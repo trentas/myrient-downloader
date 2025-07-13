@@ -84,7 +84,6 @@ download_file() {
     if [[ -n "$REMOTE_SIZE" && "$REMOTE_SIZE" == "$LOCAL_SIZE" ]]; then
       echo "📏 Matched size, marking complete: $FILE"
       echo "$FILE" >> "$COMPLETED_FILE"
-      sort -u "$COMPLETED_FILE" -o "$COMPLETED_FILE"
       return 0
     fi
   fi
@@ -176,6 +175,7 @@ while IFS= read -r DIR_NAME || [[ -n "$DIR_NAME" ]]; do
     download_file "$dir" "$file" "$url"
   '
 
+  sort -u "${LOCAL_DIR}/.completed" -o "${LOCAL_DIR}/.completed"
   rm -f "$TMP_QUEUE"
   echo "✅ Done: $DIR_NAME"
   echo
