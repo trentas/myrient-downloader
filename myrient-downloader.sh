@@ -21,36 +21,48 @@ TMP_QUEUE=""
 XARGS_PID=""
 
 CLEANUP_DONE=0
+INTERRUPTED=0
 
 cleanup() {
   # Prevent multiple executions
   [[ "$CLEANUP_DONE" -eq 1 ]] && return
   CLEANUP_DONE=1
   
-  echo ""
-  echo "🛑 Interrupting downloads..."
-  
-  # Kill xargs and all its children if running
-  if [[ -n "$XARGS_PID" ]]; then
-    # Kill the entire process group
-    kill -TERM -"$XARGS_PID" 2>/dev/null || true
-    sleep 1
-    # Force kill if still running
-    kill -KILL -"$XARGS_PID" 2>/dev/null || true
+  # Only show interrupt messages and kill processes if interrupted
+  if [[ "$INTERRUPTED" -eq 1 ]]; then
+    echo ""
+    echo "🛑 Interrupting downloads..."
+    
+    # Kill xargs and all its children if running
+    if [[ -n "$XARGS_PID" ]]; then
+      # Kill the entire process group
+      kill -TERM -"$XARGS_PID" 2>/dev/null || true
+      sleep 1
+      # Force kill if still running
+      kill -KILL -"$XARGS_PID" 2>/dev/null || true
+    fi
+    
+    # Kill any remaining wget processes (catch-all for any that escaped process group kill)
+    pkill wget 2>/dev/null || true
+    
+    echo "✅ Cleanup complete"
   fi
   
-  # Kill any remaining wget processes (catch-all for any that escaped process group kill)
-  pkill wget 2>/dev/null || true
-  
-  # Clean up temporary files
+  # Always clean up temporary files
   [[ -n "$TMP_QUEUE" && -f "$TMP_QUEUE" ]] && rm -f "$TMP_QUEUE"
   find . -name ".result.*" -delete 2>/dev/null
   
-  echo "✅ Cleanup complete"
-  exit 130
+  # Exit with 130 if interrupted, otherwise let script exit normally
+  [[ "$INTERRUPTED" -eq 1 ]] && exit 130
 }
 
-trap cleanup SIGINT SIGTERM
+handle_interrupt() {
+  INTERRUPTED=1
+  cleanup
+}
+
+trap cleanup EXIT
+trap handle_interrupt SIGINT SIGTERM
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
