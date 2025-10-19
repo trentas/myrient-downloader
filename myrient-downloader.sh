@@ -39,8 +39,8 @@ cleanup() {
     kill -KILL -"$XARGS_PID" 2>/dev/null || true
   fi
   
-  # Kill any remaining wget processes
-  pkill -P $$ wget 2>/dev/null || true
+  # Kill any remaining wget processes (catch-all for any that escaped process group kill)
+  pkill wget 2>/dev/null || true
   
   # Clean up temporary files
   [[ -n "$TMP_QUEUE" && -f "$TMP_QUEUE" ]] && rm -f "$TMP_QUEUE"
