@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Enable job control for proper signal handling
+set -m
+
 # Usage:
 #   ./myrient-downloader.sh platforms.txt exclude_patterns.txt
 #   ./myrient-downloader.sh --verbose --base-url https://myrient.erista.me/files/Redump platforms.txt exclude_patterns.txt
@@ -15,11 +18,39 @@ SUCCESS_COUNT=0
 FAIL_COUNT=0
 
 TMP_QUEUE=""
+XARGS_PID=""
+
+CLEANUP_DONE=0
+
 cleanup() {
+  # Prevent multiple executions
+  [[ "$CLEANUP_DONE" -eq 1 ]] && return
+  CLEANUP_DONE=1
+  
+  echo ""
+  echo "🛑 Interrupting downloads..."
+  
+  # Kill xargs and all its children if running
+  if [[ -n "$XARGS_PID" ]]; then
+    # Kill the entire process group
+    kill -TERM -"$XARGS_PID" 2>/dev/null || true
+    sleep 1
+    # Force kill if still running
+    kill -KILL -"$XARGS_PID" 2>/dev/null || true
+  fi
+  
+  # Kill any remaining wget processes
+  pkill -P $$ wget 2>/dev/null || true
+  
+  # Clean up temporary files
   [[ -n "$TMP_QUEUE" && -f "$TMP_QUEUE" ]] && rm -f "$TMP_QUEUE"
-  find . -name ".result.*" -delete
+  find . -name ".result.*" -delete 2>/dev/null
+  
+  echo "✅ Cleanup complete"
+  exit 130
 }
-trap cleanup EXIT SIGINT SIGTERM
+
+trap cleanup SIGINT SIGTERM
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -189,7 +220,11 @@ while IFS= read -r DIR_NAME || [[ -n "$DIR_NAME" ]]; do
     file="${rest%%|||*}"
     url="${rest#*|||}"
     download_file "$dir" "$file" "$url"
-  '
+  ' &
+  
+  XARGS_PID=$!
+  wait $XARGS_PID 2>/dev/null || true
+  XARGS_PID=""
 
   echo "📊 Download Summary"
   echo "----------------------"
